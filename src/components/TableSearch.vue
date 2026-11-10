@@ -1,7 +1,7 @@
 <template>
   <el-form ref="ruleFormRef" :model="formData">
     <el-row :gutter="24">
-      <template v-for="item in formDataAttrs" :key="item.props">
+      <template v-for="item in formDataAttrs" :key="item.prop">
         <el-col v-bind="item.col">
           <el-form-item :label="item.label" :prop="item.prop">
             <component v-model="formData[item.prop]" :is="isComp(item.comp)" :placeholder="item.placeholder">

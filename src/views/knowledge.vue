@@ -36,11 +36,12 @@
       </el-table-column>
     </el-table>
     <el-pagination
+    v-model:current-page="pagination.currentPage"
     style="margin-top: 18px;"
-    :page-size="pagination.size" 
-    layout="prev, pager, next" 
+    :page-size="pagination.size"
+    layout="prev, pager, next, total"
     :total="pagination.total"
-    @change="handleChange"
+    @current-change="handleChange"
     />
     <ArticleDialog v-model:modelValue="dialogVisible" :categoryList="categoryList" :articleDetail="currentArticle" @success="handleSuccess"/>
   </div>
@@ -71,19 +72,33 @@ const pagination = reactive({
   total: 0
 })
 
-const handleSearch = async (formData) => {
-  console.log(formData, '查询参数')
+// 最近一次查询条件
+const queryParams = ref({})
 
-  const params = {...pagination, ...formData}
+const fetchList = async () => {
+  const params = {
+    currentPage: pagination.currentPage,
+    size: pagination.size,
+    ...queryParams.value
+  }
 
-  const {records, total} = await articlepage(params)
-  tableData.value = records
-  pagination.total = total
+  const { records, total } = await articlepage(params)
+  tableData.value = records ?? []
+  pagination.total = total ?? 0
+}
+
+const handleSearch = (formData = {}) => {
+  // 过滤空值，避免把“全部”的空字符串传给后端
+  queryParams.value = Object.fromEntries(
+    Object.entries(formData).filter(([, value]) => value !== '' && value != null)
+  )
+  pagination.currentPage = 1
+  fetchList()
 }
 
 const handleChange = (page) => {
   pagination.currentPage = page
-  handleSearch()
+  fetchList()
 }
 
 // 分类列表
@@ -98,7 +113,7 @@ const dialogVisible = ref(false)
 const currentArticle = ref(null)
 const handleSuccess = () => {
   dialogVisible.value = false
-  handleSearch()
+  fetchList()
 }
 const handleEditor = (row) => {
   if(!row.id) {
@@ -129,7 +144,7 @@ const handlePublish = (row) => {
   ).then( () => { 
     changeArticleStatus(row.id, {status: 1}).then(res => {
       ElMessage.success('发布成功')
-      handleSearch()
+      fetchList()
     })
   })
 }
@@ -147,7 +162,7 @@ const handleUnpublish = (row) => {
   ).then( () => { 
     changeArticleStatus(row.id, {status: 2}).then(res => {
       ElMessage.success('下线成功')
-      handleSearch()
+      fetchList()
     })
   })
 }
@@ -165,7 +180,7 @@ const handleDelete = (row) => {
   ).then( () => { 
     deleteArticle(row.id).then(res => {
       ElMessage.success('删除成功')
-      handleSearch()
+      fetchList()
     })
   })
 }
@@ -183,6 +198,6 @@ onMounted(async () => {
   formItem[1].options = categoryList.value
 
   // 获取文章列表
-  handleSearch()
+  fetchList()
 })
 </script>

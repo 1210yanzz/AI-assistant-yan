@@ -8,8 +8,8 @@ export function startSession(data) {
   return service.post('/psychological-chat/session/start', data)
 }
 
-export function getSessionList() {
-  return service.get('/psychological-chat/sessions')
+export function getSessionList(params) {
+  return service.get('/psychological-chat/sessions', { params })
 }
 
 export function deleteSession(sessionId) {

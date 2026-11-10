@@ -36,11 +36,12 @@
       </el-table-column>
     </el-table>
     <el-pagination
+    v-model:current-page="pagination.currentPage"
     style="margin-top: 18px;"
-    :page-size="pagination.size" 
-    layout="prev, pager, next" 
+    :page-size="pagination.size"
+    layout="prev, pager, next, total"
     :total="pagination.total"
-    @change="handleChange"
+    @current-change="handleChange"
     />
     <el-dialog v-model="showDetailDialog" title="会话详情" width="800px" :close-on-click-modal="false">
       <div class="detail-content" v-if="currentDetail">
@@ -176,8 +177,8 @@ const getRiskLevelText = (riskLevel) => {
 const tableData = ref([])
 
 const formItem = [
-  { comp: "input", props: 'userId', label: '用户ID', placeholder: '请输入用户ID' },
-  { comp: "select", props: 'moodScreRange', label: '情绪评分', placeholder: '请选择评分范围', options: [
+  { comp: "input", prop: 'userId', label: '用户ID', placeholder: '请输入用户ID' },
+  { comp: "select", prop: 'moodScoreRange', label: '情绪评分', placeholder: '请选择评分范围', options: [
     {
       label:'低分（1-3分）',
       value:'1-3'
@@ -200,17 +201,48 @@ const pagination = reactive({
   total: 0
 })
 
-const handleSearch = async (formData) => {
-  const params = {...pagination, ...formData}
+// 最近一次查询条件
+const queryParams = ref({})
 
-  const {records, total} = await getEmotionDiaryPage(params)
-  tableData.value = records
-  pagination.total = total
+const buildQueryParams = (formData = {}) => {
+  const { moodScoreRange, ...rest } = formData
+
+  // 过滤空值，避免把“全部”的空字符串传给后端
+  const params = Object.fromEntries(
+    Object.entries(rest).filter(([, value]) => value !== '' && value != null)
+  )
+
+  // 把 4-6 这类评分范围拆成后端需要的 minMoodScore / maxMoodScore
+  if (moodScoreRange) {
+    const [min, max] = moodScoreRange.split('-')
+    params.minMoodScore = min
+    params.maxMoodScore = max
+  }
+
+  return params
+}
+
+const fetchList = async () => {
+  const params = {
+    current: pagination.currentPage,
+    size: pagination.size,
+    ...queryParams.value
+  }
+
+  const { records, total } = await getEmotionDiaryPage(params)
+  tableData.value = records ?? []
+  pagination.total = total ?? 0
+}
+
+const handleSearch = (formData = {}) => {
+  queryParams.value = buildQueryParams(formData)
+  pagination.currentPage = 1
+  fetchList()
 }
 
 const handleChange = (page) => {
   pagination.currentPage = page
-  handleSearch()
+  fetchList()
 }
 
 const showDetailDialog = ref(false)
@@ -239,13 +271,13 @@ const handleDelete = (row) => {
     }
   ).then(() => { 
     deleteEmotional(row.id).then(() => {
-      handleSearch()
+      fetchList()
     })
   })
 }
 
 onMounted(() => {
-  handleSearch()
+  fetchList()
 })
 </script>
 

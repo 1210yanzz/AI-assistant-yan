@@ -100,11 +100,13 @@ const handleChange = (page) => {
 }
 
 const handleSearch = () => {
-  getConsultationPage(pagination).then((res) => {
+  getConsultationPage({
+    currentPage: pagination.currentPage,
+    size: pagination.size
+  }).then((res) => {
     const { records, total } = res
-    console.log(records)
-    tableData.value = records
-    pagination.total = total
+    tableData.value = records ?? []
+    pagination.total = total ?? 0
   })
 }
 

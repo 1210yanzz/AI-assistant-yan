@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="title">
-      <div class="back-home">
+      <div class="back-home" @click="goHome">
         <el-icon><Back /></el-icon>
         <span>返回首页</span>
       </div>
@@ -48,6 +48,11 @@ const loginRules = reactive({
 })
 // 提交表单,登录
 const router = useRouter()
+
+// 未登录状态下返回前台首页
+const goHome = () => {
+  router.push('/')
+}
 const submitForm = async(formEl) => {
   if (!formEl) return
   await formEl.validate((valid, fields) => {
@@ -78,6 +83,13 @@ const submitForm = async(formEl) => {
     .title {
       .back-home {
         margin-bottom: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        &:hover {
+          color: #4A90E2;
+        }
       }
       .title-text {
         text-align: center;

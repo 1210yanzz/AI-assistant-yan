@@ -88,14 +88,12 @@ const getPageList = () => {
   const params = {
     sortField: 'publishedAt',
     sortDirection: 'desc',
-    ...pagination
+    currentPage: pagination.currentPage,
+    size: pagination.size
   }
   getKnowledgeList(params).then(res => {
-    console.log(res, '文章列表')
-    pagination.total = res.total
-    pagination.currentPage = res.currentPage
-    pagination.size = res.size
-    articleList.value = res.records
+    pagination.total = res.total ?? 0
+    articleList.value = res.records ?? []
   })
 }
 // 获得图片路径方法
