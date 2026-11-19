@@ -2,37 +2,60 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 项目概况
+## 仓库结构
 
-Vite 8 + Vue 3.5 的纯前端 SPA。目前处于项目初始阶段：已接入 Vue Router（当前只有 `/back` 一个后端布局路由）和 Element Plus 2.x（全量注册，中文语言包），尚未实现"心理健康助手"的业务功能；没有状态管理、请求库，也没有 TypeScript、ESLint/Prettier 或测试框架。
+心理健康助手项目的前后端 monorepo：
 
-## 常用命令
+```
+AI-assistant-yan/
+├── FrontendCode/   # Vue 3 + Vite 前端
+└── BackendCode/    # Spring Boot 后端（详细说明见 BackendCode/CLAUDE.md）
+```
 
-- `npm install` — 安装依赖
-- `npm run dev` — 启动开发服务器（默认 http://localhost:5173，支持 HMR）
-- `npm run build` — 生产构建，输出到 `dist/`
-- `npm run preview` — 本地预览构建产物
+前后端通过 `/api` 前缀交互：前端 axios 的 `baseURL` 为 `/api`，后端接口统一以 `/api/...` 开头。
 
-`package.json` 中只有上述三个脚本，没有 lint / test 命令，也没有配置任何测试运行器；不要假设存在可运行的检查或测试。
+## FrontendCode（前端）
 
-## 代码结构
+Vite 8 + Vue 3.5 单页应用，Element Plus、Pinia、Vue Router、Axios、ECharts、wangEditor；SSE 使用 `@microsoft/fetch-event-source`。
 
-入口链路：`index.html` → `src/main.js`（`createApp`，注册 Element Plus 与 router）→ `src/App.vue`（`<router-view>`）→ `src/router/index.js` → 布局组件（如 `src/components/BackendLayout.vue`）。
+```bash
+cd FrontendCode
+npm install
+npm run dev       # 默认 http://localhost:5173
+npm run build     # 输出到 dist/
+npm run preview
+```
 
-- `src/style.css` — 唯一的样式文件，在 `main.js` 中全局导入。所有组件都不带 `<style>` 块，样式全部集中于此且为全局作用域；新增组件沿用此约定。
-- `src/assets/` — 通过 `import` 引入、由 Vite 处理的资源（图片、SVG）。
-- `public/` — 原样拷贝到根路径的静态资源，模板中以绝对路径引用，例如 `/icons.svg#documentation-icon`。
-- `src/router/index.js` — 路由表，使用 `createWebHistory`；新增页面在此注册。
-- `vite.config.js` — 注册 `@vitejs/plugin-vue`，并把 `@` 别名指向 `src`（`fileURLToPath(new URL('./src', import.meta.url))`）；项目内模块可用 `@/...` 或相对路径导入。注意项目是 ESM（`"type": "module"`），别名路径不要写成 `resolve(__dirname, '/src')` 这类带前导斜杠的绝对路径。
+- 没有 lint / test 脚本。
+- 页面在 `src/views/`（首页、登录/注册、咨询对话、咨询记录、情绪日记、知识文章、后台 dashboard 等），路由在 `src/router/index.js`。
+- 请求封装在 `src/utils/request.js`：`baseURL: '/api'`，登录后自动附加 `Authorization: Bearer <token>`；业务码非 `200` 时统一处理，`-1` 会清除登录态并跳转登录页。
+- `vite.config.js` 中 `/api` 代理目标是 `http://159.75.169.224:1235`；本地联调后端时需改为 `http://localhost:8080`。
+- 接口定义按模块放在 `src/api/`（如 `frontend.js`、`admin.js`）。
 
-## 技术约定
+## BackendCode（后端）
 
-- 组件一律使用 Vue 3 `<script setup>` 单文件组件，纯 JavaScript（无 TS）。
-- Element Plus 在 `main.js` 中通过 `app.use(ElementPlus, { locale: zhCn })` 全量注册，模板中可直接使用 `<el-button>` 等组件，无需逐个导入；样式已引入 `element-plus/dist/index.css`。全量引入会使产物偏大（构建时约 1 MB JS），若后续对包体积敏感，可改为 `unplugin-vue-components` + `unplugin-auto-import` 按需引入。
-- 样式基于 CSS 自定义属性（`:root` 中定义颜色、字体等变量），并通过 `@media (prefers-color-scheme: dark)` 切换暗色主题。
-- `style.css` 使用了 CSS 原生嵌套（`&:hover`、`:root` 内嵌 `@media` 等），由 Vite 处理；新增样式可直接沿用嵌套写法。
+Spring Boot 4.1.2 + Java 17 + MyBatis-Plus + MySQL + Spring Security/JWT + Spring AI，端口 8080，数据库 `ai_mental_health_assistant`。
 
-## 注意事项
+```bash
+cd BackendCode
+mvn spring-boot:run
+mvn clean package
+mvn -DskipTests package
+mvn test
+mvn -Dtest=AiSpringbootYanApplicationTests#contextLoads test
+```
 
-- 目录结构仅反映模板初始状态，不要据此推断存在业务分层（如 `views/`、`stores/`、`api/`）——目前都不存在。
-- 引入 Pinia、Axios 等依赖时，需先安装并在 `main.js` 中注册；当前除 `/back` 外没有其他路由和页面。
+- **没有 Maven Wrapper**，统一使用本地 Maven（本机为 `D:\develop\apache-maven-3.9.4`），不要重新生成 `mvnw`。
+- 分层：`controller → service（接口）→ service/Impl → mapper（MyBatis-Plus BaseMapper）→ entity → MySQL`；`DTO/command` 为请求对象，`DTO/response` 为返回对象；统一响应 `common/Result`（`{code, message, data}`），异常由 `GlobalExceptionHandler` 处理。
+- 安全：Spring Security 无状态 + JWT，`utils/JwtAuthenticationFilter` 校验 token；公开路径为 `/api/user/login`、`/api/user/add`。
+- 已实现：用户注册/登录/当前用户、咨询会话创建、咨询消息保存与查询；实体已映射 `user`、`consultation_session`、`consultation_message`。
+- 仅设计未实现：情绪日记、知识文章/分类、文件上传、收藏、统计看板等（目前只有 DTO）。
+- **MyBatis-Plus 必须使用 `mybatis-plus-spring-boot4-starter`**，不要降级为 boot3 starter（Spring Boot 4 移包会导致 Mapper 扫描失败）。
+- Spring AI 的 `spring-ai-starter-model-openai` 已引入，用于接入 OpenAI 兼容的大模型接口（如 DeepSeek），当前尚未完成实际调用。
+- 配置集中在 `src/main/resources/application.yml`（数据源、端口、`jwt.*`），其中包含数据库口令与 JWT 密钥，修改或分发时注意。
+
+## 前后端对接注意
+
+- 前端发送 `Authorization: Bearer <token>`，后端 `JwtTokenUtil.getTokenFromRequest` 当前读取的请求头是 `token`，两端不一致时受保护接口会返回未授权。
+- 前端已调用但后端尚未实现的接口包括：咨询会话列表/删除/消息详情、会话情绪分析、情绪日记、知识文章列表与详情。
+- 后端详细约定（包名大写目录、命名、依赖约束等）见 `BackendCode/CLAUDE.md`。

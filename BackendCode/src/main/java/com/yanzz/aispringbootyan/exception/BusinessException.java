@@ -1,0 +1,19 @@
+package com.yanzz.aispringbootyan.exception;
+
+import lombok.Getter;
+
+@Getter
+public class BusinessException extends RuntimeException {
+
+    private final String code;
+    private final String message;
+    private final Object data;
+
+    public BusinessException(String message) {
+        super(message);
+        this.code = "-1";
+        this.message = message;
+        this.data = null;
+    }
+
+}
