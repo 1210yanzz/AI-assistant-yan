@@ -51,11 +51,11 @@ mvn -Dtest=AiSpringbootYanApplicationTests#contextLoads test
 - 已实现：用户注册/登录/当前用户、咨询会话创建、咨询消息保存与查询；实体已映射 `user`、`consultation_session`、`consultation_message`。
 - 仅设计未实现：情绪日记、知识文章/分类、文件上传、收藏、统计看板等（目前只有 DTO）。
 - **MyBatis-Plus 必须使用 `mybatis-plus-spring-boot4-starter`**，不要降级为 boot3 starter（Spring Boot 4 移包会导致 Mapper 扫描失败）。
-- Spring AI 的 `spring-ai-starter-model-openai` 已引入，用于接入 OpenAI 兼容的大模型接口（如 DeepSeek），当前尚未完成实际调用。
+- 已通过 `spring-ai-starter-model-openai` 接入 DeepSeek（`spring.ai.openai.base-url=https://api.deepseek.com/v1`，模型 `deepseek-chat`），`POST /api/psychological-chat/start` 以 SSE 流式返回；`DEEPSEEK_API_KEY` 通过环境变量提供。
 - 配置集中在 `src/main/resources/application.yml`（数据源、端口、`jwt.*`），其中包含数据库口令与 JWT 密钥，修改或分发时注意。
 
 ## 前后端对接注意
 
-- 前端发送 `Authorization: Bearer <token>`，后端 `JwtTokenUtil.getTokenFromRequest` 当前读取的请求头是 `token`，两端不一致时受保护接口会返回未授权。
+- 前端发送 `Authorization: Bearer <token>`；后端 `JwtTokenUtil.getTokenFromRequest` 已按 `jwt.header`（默认 `Authorization`）和 `jwt.token-prefix`（默认 `Bearer`）解析，并兼容旧的 `token` 请求头。
 - 前端已调用但后端尚未实现的接口包括：咨询会话列表/删除/消息详情、会话情绪分析、情绪日记、知识文章列表与详情。
 - 后端详细约定（包名大写目录、命名、依赖约束等）见 `BackendCode/CLAUDE.md`。

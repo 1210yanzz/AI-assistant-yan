@@ -13,14 +13,11 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
-
-import javax.swing.*;
 
 @RestController
 @RequestMapping("/api/psychological-chat")
@@ -59,5 +56,14 @@ public class PsychologicalChatController {
                     .build()
             );
         }
+        // 调用 AI 服务层进行流式对话，识别用户消息，返回增量文本
+        return psychologicalSupportService
+                .streamPsychologicalChat(userId, consultationStreamDTO.getSessionId(), consultationStreamDTO.getUserMessage())
+                .map(chunk -> ServerSentEvent.<String>builder().data(chunk).build())
+                .concatWithValues(ServerSentEvent.<String>builder().event("done").data("[DONE]").build())
+                .onErrorResume(error -> Flux.just(ServerSentEvent.<String>builder()
+                        .event("error")
+                        .data(JSONUtil.toJsonStr(Result.error(ResultCode.SYSTEM_ERROR.getCode(), ResultCode.SYSTEM_ERROR.getMessage(), error.getMessage())))
+                        .build()));
     }
 }

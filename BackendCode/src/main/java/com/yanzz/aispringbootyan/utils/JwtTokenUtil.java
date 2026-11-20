@@ -58,18 +58,35 @@ public class JwtTokenUtil implements ApplicationContextAware {
         }
     }
 
-    // 创建一个获取token的方法
+    // 从请求头获取token，默认读取 Authorization: Bearer <token>
     public static String getTokenFromRequest(HttpServletRequest request) {
-        if(request == null) {
+        if (request == null) {
             return null;
         }
-        String tokenHeader = request.getHeader("token");
-        //  判断tokenHeader是否为空
-        if(StringUtils.hasText(tokenHeader)) {  //hasText方法==>如果字符串不是null，其长度大于0，且至少包含一个非空白字符，则返回true
-            //  为true说明tokenHeader不为空，直接返回
-            return tokenHeader;
+        // 请求头名称和前缀从 jwt 配置读取，未配置时使用标准值
+        JwtConfig jwtConfig = getJwtConfig();
+        String headerName = StringUtils.hasText(jwtConfig.getHeader()) ? jwtConfig.getHeader() : "Authorization";
+        String tokenHeader = request.getHeader(headerName);
+        // 兼容旧客户端仍在使用的 token 请求头
+        if (!StringUtils.hasText(tokenHeader) && !"token".equalsIgnoreCase(headerName)) {
+            tokenHeader = request.getHeader("token");
         }
-        return null;
+        if (!StringUtils.hasText(tokenHeader)) {
+            return null;
+        }
+        tokenHeader = tokenHeader.trim();
+        // 去掉 token 前缀（如 Bearer），前缀匹配不区分大小写
+        String tokenPrefix = jwtConfig.getTokenPrefix();
+        if (StringUtils.hasText(tokenPrefix)) {
+            String prefix = tokenPrefix.trim();
+            if (!prefix.endsWith(" ")) {
+                prefix = prefix + " ";
+            }
+            if (tokenHeader.regionMatches(true, 0, prefix, 0, prefix.length())) {
+                tokenHeader = tokenHeader.substring(prefix.length()).trim();
+            }
+        }
+        return StringUtils.hasText(tokenHeader) ? tokenHeader : null;
     }
 
     // 获取当前token
