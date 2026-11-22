@@ -47,6 +47,7 @@ public class PsychologicalChatController {
     @Resource
     private EmotionAnalysisService emotionAnalysisService;
 
+    // 开启心理咨询会话
     @PostMapping("/session/start")
     public Result<StructOutPut.StreamChatSession> startSession(@Valid @RequestBody ConsultationSessionCreateDTO consultationSessionCreateDTO) {
         // 获取用户Id
@@ -61,6 +62,7 @@ public class PsychologicalChatController {
         return Result.ok(streamChatSession);
     }
 
+    // 流式心理咨询会话
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> sessionChat(@Valid @RequestBody ConsultationStreamDTO consultationStreamDTO) {
         // 获取token

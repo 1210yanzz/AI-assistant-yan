@@ -23,6 +23,7 @@ public class EmotionAnalysisService {
     // 只取最近 20 条消息，控制上下文长度和调用成本
     private static final int HISTORY_LIMIT = 20;
 
+    // 情绪分析的系统提示
     private static final String ANALYSIS_SYSTEM_PROMPT = """
             你是一名专业的心理情绪分析助手。请根据最近的心理咨询对话，分析用户当前的情绪状态。
             只输出一个 JSON 对象，不要输出 Markdown 代码块、解释或其他文字。JSON 字段如下：
