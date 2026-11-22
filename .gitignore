@@ -1,0 +1,5 @@
+# IntelliJ IDEA 配置，不纳入版本管理
+.idea/
+
+# 根目录误生成的 npm 锁文件（真正的前端锁文件在 FrontendCode/package-lock.json）
+/package-lock.json
