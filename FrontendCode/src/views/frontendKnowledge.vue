@@ -98,7 +98,7 @@ const getPageList = () => {
 }
 // 获得图片路径方法
 const getImage = (url) => {
-  return url ? 'http://159.75.169.224:1235' + url : 'https://file.itndedu.com/psychology_ai.png'
+  return url ? fileBaseUrl + url : 'https://file.itndedu.com/psychology_ai.png'
 }
 // 分页改变时调用的方法
 const handleChange = (page) => {

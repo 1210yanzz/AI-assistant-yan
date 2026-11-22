@@ -40,13 +40,12 @@ const router = useRouter()
 const iconUrl = new URL('@/assets/image/ai-image.png', import.meta.url).href
 
 // 退出登录
-const handleLogout = () => { 
-  logout().then(() => { 
-    // 退出登录成功，清理登录信息token和用户信息
+const handleLogout = () => {
+  // JWT 无状态，退出登录以清理本地登录态为准；即使接口失败（如 token 已失效）也要退出
+  logout().catch(() => {}).finally(() => {
     localStorage.removeItem('token')
     localStorage.removeItem('userInfo')
-    // 跳转到登录页面
-    router.push('auth/login')
+    router.push('/auth/login')
   })
 }
 

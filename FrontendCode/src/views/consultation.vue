@@ -308,7 +308,7 @@ const startNewSession = (message) => {
   }
   //  如果是新会话，那就要给sessionParams.sessionTitle创建一个独属于的标题
   if (currentSession.value.sessionTitle === '新会话') {
-    sessionParams.sessionTitle = `宁波AI助手-${new Date().toLocaleString()}`
+    sessionParams.sessionTitle = `栖心AI助手-${new Date().toLocaleString()}`
   }
   //    不是新会话，那就是历史会话了
   else {

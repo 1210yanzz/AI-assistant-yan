@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ConsultationMessageServiceImpl implements ConsultationMessageService {
@@ -81,6 +82,26 @@ public class ConsultationMessageServiceImpl implements ConsultationMessageServic
         List<ConsultationMessage> messages = consultationMessageMapper.selectList(queryWrapper);
         Collections.reverse(messages);
         return messages;
+    }
+
+    @Override
+    public List<ConsultationMessageResponseDTO> listMessagesBySessionId(Long sessionId) {
+        LambdaQueryWrapper<ConsultationMessage> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper
+                .eq(ConsultationMessage::getSessionId, sessionId)
+                .orderByAsc(ConsultationMessage::getCreatedAt)
+                .orderByAsc(ConsultationMessage::getId);
+        return consultationMessageMapper.selectList(queryWrapper)
+                .stream()
+                .map(this::convertToConsultationMessageResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteMessagesBySessionId(Long sessionId) {
+        LambdaQueryWrapper<ConsultationMessage> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ConsultationMessage::getSessionId, sessionId);
+        consultationMessageMapper.delete(queryWrapper);
     }
 
     private ConsultationMessageResponseDTO convertToConsultationMessageResponseDTO(ConsultationMessage consultationMessage) {

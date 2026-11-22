@@ -1,6 +1,7 @@
 package com.yanzz.aispringbootyan.DTO.command;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -23,16 +24,19 @@ public class KnowledgeArticleCommandDTO {
     @NotBlank(message = "文章内容不能为空")
     private String content;
 
-    // 封面图片地址，选填
+    // 封面图片地址（OSS 相对路径），选填
+    @Size(max = 500, message = "封面图片地址最多500个字符")
     private String coverImage;
 
-    // 所属分类ID，选填
+    // 所属分类ID，必填（数据库该列非空）
     // Long 是 long 的包装类型，可以为 null，适合数据库主键 ID
+    @NotNull(message = "文章分类不能为空")
     private Long categoryId;
 
     // 摘要，选填
     private String summary;
 
-    // 标签，选填
+    // 标签，多个标签用逗号分隔，选填
+    @Size(max = 500, message = "标签最多500个字符")
     private String tags;
 }

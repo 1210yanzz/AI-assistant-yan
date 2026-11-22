@@ -1,5 +1,6 @@
 package com.yanzz.aispringbootyan.utils;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.yanzz.aispringbootyan.DTO.response.UserLoginResponseDTO;
 import com.yanzz.aispringbootyan.Enum.UserStatus;
 import com.yanzz.aispringbootyan.common.ResultCode;
@@ -42,12 +43,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {  // JWT认�
         String requestURI = request.getRequestURI();
         String method = request.getMethod();
         // 打印请求的路径和方法
-        System.out.println("requestURI = " + requestURI + ", method = " + method);
+        //System.out.println("requestURI = " + requestURI + ", method = " + method);
         // 从请求头中获取token
         String token = JwtTokenUtil.getTokenFromRequest(request);
         if (StringUtils.hasText(token)) {
-            // 如果token存在，验证token
-            JwtTokenUtil.TokenValidationResult validationResult = JwtTokenUtil.validateToken(token);
+            // 如果token存在，验证token；签名错误、过期等异常统一转成 401，不要抛成 500
+            JwtTokenUtil.TokenValidationResult validationResult;
+            try {
+                validationResult = JwtTokenUtil.validateToken(token);
+            } catch (JWTVerificationException e) {
+                clearSecurityContext();
+                ResponseUtil.writeError(response, ResultCode.TOKEN_INVALID);
+                return;
+            }
             if (validationResult != null && validationResult.isValid()) {
                 // 查询用户信息验证用户状态
                 UserLoginResponseDTO.UserDetailResponseDTO userDetail = userServiceImpl.getUserDetailByUserId(validationResult.getUserId());

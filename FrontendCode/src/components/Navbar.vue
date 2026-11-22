@@ -42,12 +42,10 @@ const handleCommand = (command) => {
       cancelButtonText: '取消',
       type: 'warning',
     }).then(() => {
-      // 退出登录
-      logout().then(res => {
-        // 退出登录成功，清理登录信息token和用户信息
+      // 退出登录：即使接口失败（如 token 已失效）也要清理本地登录态
+      logout().catch(() => {}).finally(() => {
         localStorage.removeItem('token')
         localStorage.removeItem('userInfo')
-        // 跳转到登录页面
         router.push('/auth/login')
       })
     })

@@ -19,4 +19,10 @@ public interface ConsultationMessageService {
     ConsultationMessageResponseDTO getLastMessageBySessionId(Long sessionIdLong);
 
     List<ConsultationMessage> listRecentMessages(Long sessionId, int limit);
+
+    // 查询某个会话的全部消息，按时间升序返回给前端
+    List<ConsultationMessageResponseDTO> listMessagesBySessionId(Long sessionId);
+
+    // 删除某个会话的全部消息（删除会话时使用）
+    void deleteMessagesBySessionId(Long sessionId);
 }

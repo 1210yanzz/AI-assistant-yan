@@ -45,6 +45,17 @@ public class UserController {
     }
 
     /**
+     * 退出登录
+     * JWT 是无状态的，服务端不保存登录状态，前端收到成功后清除本地 token 即可
+     *
+     * @return
+     */
+    @PostMapping("/logout")
+    public Result<Void> logout() {
+        return Result.ok();
+    }
+
+    /**
      * 获取当前用户
      *
      * @return

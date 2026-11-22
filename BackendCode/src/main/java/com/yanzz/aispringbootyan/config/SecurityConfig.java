@@ -2,6 +2,7 @@ package com.yanzz.aispringbootyan.config;
 
 import cn.hutool.core.text.AntPathMatcher;
 import com.yanzz.aispringbootyan.utils.JwtAuthenticationFilter;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -48,6 +49,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)  // 禁用CSRF保护
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))  // 禁用会话管理（JWT需要）
                 .authorizeHttpRequests(authorize -> authorize   // 授权请求
+                        // SSE/流式接口结束后会触发 ASYNC 派发，原始请求已经认证过，这里必须放行；
+                        // ERROR 派发用于 /error 错误页，避免异常时错误页再次被拦截
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
                         .requestMatchers(PUBLIC_URLS).permitAll()  // 公开的API，不需要认证即可访问
                         .anyRequest().authenticated()  // 其他请求需要认证
                 )
